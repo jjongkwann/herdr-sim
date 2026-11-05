@@ -24,14 +24,14 @@ Or by hand:
 ```sh
 git clone https://github.com/wobsoriano/herdr-sim
 cd herdr-sim
-cp -R mods/simdock mods/simdock-screen mods/tabs-simdock ~/.config/herdr-app/mods/
-cp layouts/simdock.json ~/.config/herdr-app/layouts/
-herdr-app do layout.switch --name simdock
+cp -R mods/herdr-sim mods/herdr-sim-screen mods/tabs-herdr-sim ~/.config/herdr-app/mods/
+cp layouts/herdr-sim.json ~/.config/herdr-app/layouts/
+herdr-app do layout.switch --name herdr-sim
 ```
 
-Then add the two shortcuts in [keys.json](keys.json) to `~/.config/herdr-app/keys.json`. In Herdr, the layout and the mod are both named `simdock`.
+Then add the two shortcuts in [keys.json](keys.json) to `~/.config/herdr-app/keys.json`. In Herdr, the layout and the mod are both named `herdr-sim`.
 
-If you only want the pane, copy `mods/simdock` and `mods/simdock-screen` and skip the rest.
+If you only want the pane, copy `mods/herdr-sim` and `mods/herdr-sim-screen` and skip the rest.
 
 You need macOS, Xcode with at least one simulator, and Node. For Android you also need the Android SDK and an emulator image built for your Mac's chip.
 
@@ -39,28 +39,28 @@ You need macOS, Xcode with at least one simulator, and Node. For Android you als
 
 ### From the tab bar
 
-Switch to the `simdock` layout. Click **Simulator** next to Files and Changes, or press ⌘⇧S. Click it again to close the panel. Each space remembers whether the panel was open.
+Switch to the `herdr-sim` layout. Click **Simulator** next to Files and Changes, or press ⌘⇧S. Click it again to close the panel. Each space remembers whether the panel was open.
 
 ### As a pane
 
 In any other layout, press ⌘⇧S, or run:
 
 ```sh
-herdr-app do pane.split --direction right --mod simdock
+herdr-app do pane.split --direction right --mod herdr-sim
 ```
 
 Close it like any other pane.
 
 ### With e2e
 
-Copy [`e2e/herdr-simdock.ts`](e2e/herdr-simdock.ts) into your project and add it to your config's reporters:
+Copy [`e2e/herdr-sim.ts`](e2e/herdr-sim.ts) into your project and add it to your config's reporters:
 
 ```ts
-import { herdrSimdock } from './e2e/herdr-simdock';
+import { herdrSim } from './e2e/herdr-sim';
 
 export default {
   // ...
-  reporters: ['list', herdrSimdock()],
+  reporters: ['list', herdrSim()],
 };
 ```
 
@@ -84,4 +84,4 @@ Herdr Sim sends nothing over the internet itself.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The tab bar in `mods/tabs-simdock` is adapted from Herdr's own and keeps Herdr's Apache-2.0 license, in `mods/tabs-simdock/LICENSE`. The icons are from [Lucide](https://lucide.dev) under the ISC license, except the Android icon.
+MIT, see [LICENSE](LICENSE). The tab bar in `mods/tabs-herdr-sim` is adapted from Herdr's own and keeps Herdr's Apache-2.0 license, in `mods/tabs-herdr-sim/LICENSE`. The icons are from [Lucide](https://lucide.dev) under the ISC license, except the Android icon.

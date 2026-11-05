@@ -79,7 +79,7 @@
           "id": "tabs",
           "type": "block",
           "content": {
-            "mod": "tabs-simdock"
+            "mod": "tabs-herdr-sim"
           },
           "size": {
             "px": 42
@@ -142,10 +142,10 @@
                       }
                     },
                     {
-                      "id": "simdock",
+                      "id": "herdr-sim",
                       "type": "block",
                       "content": {
-                        "mod": "simdock",
+                        "mod": "herdr-sim",
                         "props": {
                           "frames": "panel"
                         }

@@ -15,7 +15,7 @@ import { SDK, startAndroid } from "./android.js";
 // Each shown copy (the panel, a pane) needs its own files, or one overwrites
 // the frame the other has on show. A layout block names its set in props.
 const RING = 12;
-const frameFiles = (set) => Array.from({ length: RING }, (_, i) => `mods/simdock-screen/${set}-${i}.jpg`);
+const frameFiles = (set) => Array.from({ length: RING }, (_, i) => `mods/herdr-sim-screen/${set}-${i}.jpg`);
 const RELOAD_MS = 200;
 // ~30 fps, as smooth as a swipe needs; each file in the ring holds a decoded
 // full-size frame (~12 MB). Writes catch up by at most one FRAME_MS, so a file
@@ -23,12 +23,12 @@ const RELOAD_MS = 200;
 // after it stopped being on show.
 const FRAME_MS = 33;
 // The picked simulator's UDID; null follows the first booted one.
-const SELECTED = "simdock.device";
+const SELECTED = "herdr-sim.device";
 const HEADER = 44;
 const TOOLBAR = 28;
 const BEZEL = 10;
 const PAD = 12;
-const ICONS = "mods/simdock/icons";
+const ICONS = "mods/herdr-sim/icons";
 // Pixels per line, for a wheel that reports lines.
 const LINE = 20;
 // The HID consumer page, where volume up is 233 and down 234.
@@ -463,7 +463,7 @@ export default class Simulator extends View {
       : v_flex().w(screenW).h(screenH).rounded(radius).bg("#000000").items_center().justify_center().p(24)
           .child(div().text_size(12).text_color(t.dim).child(note));
 
-    return v_flex().id("simdock").relative().size_full().p(PAD).gap(PAD)
+    return v_flex().id("herdr-sim").relative().size_full().p(PAD).gap(PAD)
       .track_focus(this.focus)
       .on_key_down((e, cx) => this.keyDown(e, cx))
       .on_key_up((e, cx) => this.keyUp(e, cx))

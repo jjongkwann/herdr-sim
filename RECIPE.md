@@ -14,7 +14,7 @@ an e2e reporter shows it when a test run starts.
   bar), with one more button in the tab bar: **Simulator**, a 14px
   `smartphone` icon and the label, after Files and Changes, styled like them
   (26px tall, 6px radius, `selected` background while its panel shows).
-- **The panel** (368px wide by default, 280 to 900px) shows the `simdock`
+- **The panel** (368px wide by default, 280 to 900px) shows the `herdr-sim`
   view, top to bottom, with 12px padding and 12px gaps:
   - **Device selector**, 36px tall, 8px radius, `surface` background, 1px
     `border` border (`input` on hover): a 15px `circle-check` icon (`ansi2`
@@ -46,10 +46,10 @@ an e2e reporter shows it when a test run starts.
 
 ## How it behaves
 
-- **Simulator button / ⌘⇧S** (in the `simdock` layout): opens the panel on
-  `simdock`, or closes it when it already shows it. Like Files and Changes, the
+- **Simulator button / ⌘⇧S** (in the `herdr-sim` layout): opens the panel on
+  `herdr-sim`, or closes it when it already shows it. Like Files and Changes, the
   panel's state is remembered per space.
-- **⌘⇧S in any other layout** splits the focused pane with a `simdock` pane.
+- **⌘⇧S in any other layout** splits the focused pane with a `herdr-sim` pane.
 - **Picking a device** makes it the one shown everywhere (stored in shared
   state). A shut-down one boots: iOS with `simctl boot`, Android with the
   emulator, headless (`-no-window -no-audio`). With nothing picked, the first
@@ -60,24 +60,24 @@ an e2e reporter shows it when a test run starts.
   The toolbar buttons press the device's buttons.
 - **Repair input** (iOS) runs `serve-sim repair-input`, then restarts the
   stream; for when taps do nothing because Xcode's Device Hub took input.
-- **e2e reporter** (`e2e/herdr-simdock.ts`): on `run-started`, inside a Herdr
+- **e2e reporter** (`e2e/herdr-sim.ts`): on `run-started`, inside a Herdr
   terminal (`HC_TERMINAL_ID` set), runs `layout.select` `panel-body` →
-  `simdock` then `layout.show` `panel`; if the layout has no such stack, it
-  opens a `simdock` pane to the right, remembers its id in
-  `$TMPDIR/herdr-simdock-pane`, reuses it next run if `pane.focus` still finds
+  `herdr-sim` then `layout.show` `panel`; if the layout has no such stack, it
+  opens a `herdr-sim` pane to the right, remembers its id in
+  `$TMPDIR/herdr-sim-pane`, reuses it next run if `pane.focus` still finds
   it, and gives focus back to the test's terminal.
 
 ## Built from
 
-- **Layout** `layouts/simdock.json`: a clone of Herdr 0.1.13's `main`.
-  `tabs` uses `tabs-simdock`; the `panel-body` stack holds `files`, `changes`
-  and a third block `{ "id": "simdock", "content": { "mod": "simdock",
+- **Layout** `layouts/herdr-sim.json`: a clone of Herdr 0.1.13's `main`.
+  `tabs` uses `tabs-herdr-sim`; the `panel-body` stack holds `files`, `changes`
+  and a third block `{ "id": "herdr-sim", "content": { "mod": "herdr-sim",
   "props": { "frames": "panel" } } }`.
-- **`mods/tabs-simdock`**: Herdr's `tabs` mod cloned (`mod.clone`), with
-  `"simdock"` appended to the enabled panels, the Simulator `panelButton` after
+- **`mods/tabs-herdr-sim`**: Herdr's `tabs` mod cloned (`mod.clone`), with
+  `"herdr-sim"` appended to the enabled panels, the Simulator `panelButton` after
   Changes, and a `togglePanel(id)` the buttons and a `nextCommand()` loop share
-  (so `"tabs-simdock.simdock"` in `keys.json` toggles it).
-- **`mods/simdock`** (`"focusable": true`): `main.js` (picker, session loop,
+  (so `"tabs-herdr-sim.herdr-sim"` in `keys.json` toggles it).
+- **`mods/herdr-sim`** (`"focusable": true`): `main.js` (picker, session loop,
   frame ring, input, render), `serve-sim.js` (iOS), `android.js` (Android input
   and helper start), `android-stream.mjs` (the Android frame helper), `icons/`.
   - A session is `{ device, input, host, port, path }`: a multipart stream of
@@ -99,10 +99,10 @@ an e2e reporter shows it when a test run starts.
     replaying the last frame to each new viewer. The mod starts it in `sh`
     only when `nc -z` finds nothing on that port, then waits with `nc -z`.
   - **Frames on screen**: each frame is written to the next of 12 files in
-    `mods/simdock-screen/<props.frames ?? "pane">-<n>.jpg` and moved to the top
+    `mods/herdr-sim-screen/<props.frames ?? "pane">-<n>.jpg` and moved to the top
     of a stack of 12 absolutely placed `image()`s 200 ms later; at most one
     write per 33 ms on a due-time schedule.
-- **`mods/simdock-screen`**: an empty mod (`main.js` renders a `div()`) whose
+- **`mods/herdr-sim-screen`**: an empty mod (`main.js` renders a `div()`) whose
   folder holds the frames.
 - Herdr functions: `exec`, `net.connect`, `writeFile`, `appHome`, `shared` /
   `setShared`, `props`, `nextCommand`, `theme`, `layout`, `run`
@@ -137,7 +137,7 @@ an e2e reporter shows it when a test run starts.
 
 ## Done when
 
-- The `simdock` layout shows a Simulator button after Changes; clicking it opens
+- The `herdr-sim` layout shows a Simulator button after Changes; clicking it opens
   the panel with the device streaming, and clicking again closes it.
 - Dragging a list in the panel scrolls it on the device, smoothly (about 30
   distinct frames a second), with no blank frames.
@@ -145,7 +145,7 @@ an e2e reporter shows it when a test run starts.
 - The picker lists iOS and Android devices under their headings; picking the
   other platform switches the stream within a few seconds, and an Android
   helper process exits a few seconds after the view leaves it.
-- `herdr-app do pane.split --direction right --mod simdock` opens the same view
+- `herdr-app do pane.split --direction right --mod herdr-sim` opens the same view
   in a layout without the panel, while the panel shows too, both live.
 - `e2e run` in a Herdr terminal opens the panel (or a pane in another layout)
   as the run starts, and focus stays on the terminal.

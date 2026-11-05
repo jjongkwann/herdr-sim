@@ -52,7 +52,7 @@ async function startStream(serial) {
     'for i in $(seq 50); do sleep 0.1; nc -z 127.0.0.1 "$3" && exit 0; done',
     'exit 1',
   ].join("\n");
-  const r = await exec("sh", ["-c", script, "sh", `${appHome()}/mods/simdock/android-stream.mjs`, consolePort, port, String(STREAM_WIDTH)]);
+  const r = await exec("sh", ["-c", script, "sh", `${appHome()}/mods/herdr-sim/android-stream.mjs`, consolePort, port, String(STREAM_WIDTH)]);
   if (r.code !== 0) throw new Error("the emulator's screen stream didn't start");
   return Number(port);
 }
