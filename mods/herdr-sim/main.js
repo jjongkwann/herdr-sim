@@ -1,6 +1,6 @@
 import { View, div, image, svg } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { exec, theme, appHome, shared, setShared, nextCommand, props } from "herdr";
+import { exec, theme, appHome, shared, setShared, nextCommand, props, layout } from "herdr";
 import net from "net";
 import { writeFile } from "fs/promises";
 import { serveSim, startHelper, keyUsages, touchEdge } from "./serve-sim.js";
@@ -12,8 +12,10 @@ import { SDK, startAndroid } from "./android.js";
 // ~175 ms, then reloads, blank meanwhile. So frames rotate through a ring of
 // files stacked under the one on show, and each moves to the top once it has
 // reloaded; restacking images costs nothing.
-// Each shown copy (the panel, a pane) needs its own files, or one overwrites
-// the frame the other has on show. A layout block names its set in props.
+// Each view (the panel, each pane) needs its own files, or one overwrites the
+// frame another has on show. A layout block names its view in props; a pane
+// can't learn its own id, so it takes the lowest free pane-N. Slots are reused
+// rather than made unique because Herdr never evicts an image path it loaded.
 const RING = 12;
 const frameFiles = (set) => Array.from({ length: RING }, (_, i) => `mods/herdr-sim-screen/${set}-${i}.jpg`);
 const RELOAD_MS = 200;
@@ -22,8 +24,32 @@ const RELOAD_MS = 200;
 // is rewritten (RING - 1) * FRAME_MS after its last write at the soonest, well
 // after it stopped being on show.
 const FRAME_MS = 33;
-// The picked simulator's UDID; null follows the first booted one.
-const SELECTED = "herdr-sim.device";
+// The device each view shows, by view, and the last one picked anywhere. A
+// view with no choice of its own keeps the one last picked when it opened, so
+// a pick in another view doesn't move it; else it shows the first booted one.
+const CHOICES = "herdr-sim.devices";
+const LAST_PICKED = "herdr-sim.device";
+// Slots taken by open panes. globalThis is shared by every copy and starts
+// empty when Herdr does.
+const panes = (globalThis.__herdrSimPanes ??= new Set());
+
+function findNode(node, id) {
+  if (node?.id === id) return node;
+  for (const child of node?.children ?? []) {
+    const found = findNode(child, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+function claimPaneSlot() {
+  for (let i = 1; ; i++) {
+    if (!panes.has(`pane-${i}`)) {
+      panes.add(`pane-${i}`);
+      return `pane-${i}`;
+    }
+  }
+}
 const HEADER = 44;
 const TOOLBAR = 28;
 const BEZEL = 10;
@@ -148,7 +174,9 @@ export default class Simulator extends View {
     this.picking = false;
     this.booting = new Set();
     this.repairing = null;
-    this.frames = frameFiles(props()?.frames ?? "pane");
+    this.view = props()?.frames ?? claimPaneSlot();
+    this.frames = frameFiles(this.view);
+    this.opened = shared(LAST_PICKED);
     // Indexes into this.frames, bottom to top; the last is on show.
     this.stack = this.frames.map((_, i) => i);
     this.next = 0;
@@ -169,6 +197,7 @@ export default class Simulator extends View {
 
   async close() {
     this.closed = true;
+    panes.delete(this.view);
     this.socket?.close();
     await this.release();
   }
@@ -182,7 +211,7 @@ export default class Simulator extends View {
 
   // The device to show: the picked one, else the first booted one.
   target() {
-    const picked = shared(SELECTED);
+    const picked = shared(CHOICES)?.[this.view] ?? this.opened;
     return this.devices.find((d) => d.id === picked) ?? this.devices.find((d) => d.booted) ?? null;
   }
 
@@ -197,7 +226,8 @@ export default class Simulator extends View {
 
   async pick(device, cx) {
     this.picking = false;
-    setShared(SELECTED, device.id);
+    setShared(CHOICES, { ...shared(CHOICES), [this.view]: device.id });
+    setShared(LAST_PICKED, device.id);
     this.socket?.close();
     if (!device.booted && !this.booting.has(device.id)) {
       this.booting.add(device.id);
@@ -212,10 +242,26 @@ export default class Simulator extends View {
     this.socket?.close();
   }
 
+  // Herdr keeps a copy running once it has shown, so the panel's copy goes on
+  // while the panel is closed or on Files or Changes; it stops streaming then.
+  // A pane can't tell whether its tab shows, so panes always stream.
+  hidden() {
+    if (this.view !== "panel") return false;
+    const root = layout();
+    const panel = findNode(root, "panel");
+    return !panel || panel.hidden || findNode(root, "panel-body")?.active !== "herdr-sim";
+  }
+
   async run(cx) {
     while (!this.closed) {
       let device = null;
       try {
+        if (this.hidden()) {
+          this.socket?.close();
+          this.paused = true;
+          await sleep(cx, 500);
+          continue;
+        }
         this.devices = await listDevices();
         device = this.target();
         if (!device) {
@@ -241,7 +287,11 @@ export default class Simulator extends View {
           await this.release();
           this.set({ kind: "starting", device }, cx);
           this.session = await platform.start(device);
+        } else if (this.paused && device.platform === "android") {
+          // Its frame helper exits once nothing watches; starting again reuses it if it didn't.
+          this.session = await platform.start(device);
         }
+        this.paused = false;
         await this.stream(cx);
       } catch (e) {
         if (this.closed) return;
@@ -262,7 +312,7 @@ export default class Simulator extends View {
     // When the next frame is due: a schedule rather than a gap since the last
     // write, or uneven arrivals skip two frames where one would do.
     let due = 0;
-    for (;;) {
+    read: for (;;) {
       // A read on a socket closed here (a pick, a repair) ends the stream like EOF.
       const chunk = await socket.read(1 << 16).catch(() => null);
       if (chunk == null || this.closed || this.repairing || this.target()?.id !== device.id) break;
@@ -282,6 +332,7 @@ export default class Simulator extends View {
         if (len < end) break;
         const now = Date.now();
         if (length && now >= due) {
+          if (this.hidden()) break read;
           due = Math.max(due, now - FRAME_MS) + FRAME_MS;
           const frame = buf.slice(start, end);
           this.aspect = imageAspect(frame) ?? this.aspect;

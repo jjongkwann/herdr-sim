@@ -50,8 +50,12 @@ an e2e reporter shows it when a test run starts.
   `herdr-sim`, or closes it when it already shows it. Like Files and Changes, the
   panel's state is remembered per space.
 - **⌘⇧S in any other layout** splits the focused pane with a `herdr-sim` pane.
-- **Picking a device** makes it the one shown everywhere (stored in shared
-  state). A shut-down one boots: iOS with `simctl boot`, Android with the
+- **While the panel is closed** or showing Files or Changes, its view stops
+  streaming and picks up within a second of showing again. Panes always
+  stream, since a pane can't tell whether its tab shows.
+- **Picking a device** changes only that view. Each view (the panel, each
+  pane) keeps its own choice in shared state; a view with none shows the
+  device picked last anywhere at the moment it opened. A shut-down one boots: iOS with `simctl boot`, Android with the
   emulator, headless (`-no-window -no-audio`). With nothing picked, the first
   running device shows.
 - **On the screen**: press, drag and release are one finger (begin, move, end),
@@ -98,8 +102,12 @@ an e2e reporter shows it when a test run starts.
     serves the PNGs as `multipart/x-mixed-replace` on `27000 + console port`,
     replaying the last frame to each new viewer. The mod starts it in `sh`
     only when `nc -z` finds nothing on that port, then waits with `nc -z`.
+  - **Views**: the panel is `props.frames` (`"panel"`); a pane claims the
+    lowest free `pane-N` from a `Set` on `globalThis` (shared by every copy,
+    empty when Herdr starts) and frees it in `close()`. Choices live in shared
+    `herdr-sim.devices` keyed by view, plus `herdr-sim.device` for the last pick.
   - **Frames on screen**: each frame is written to the next of 12 files in
-    `mods/herdr-sim-screen/<props.frames ?? "pane">-<n>.jpg` and moved to the top
+    `mods/herdr-sim-screen/<view>-<n>.jpg` and moved to the top
     of a stack of 12 absolutely placed `image()`s 200 ms later; at most one
     write per 33 ms on a due-time schedule.
 - **`mods/herdr-sim-screen`**: an empty mod (`main.js` renders a `div()`) whose
@@ -120,9 +128,14 @@ an e2e reporter shows it when a test run starts.
   grows by megabytes a second. `http://` paths don't load in `image()`.
 - **Gate frames on a schedule**, not "33 ms since the last write": frames arrive
   unevenly, and the gap rule drops two where it should drop one.
-- **Each shown copy needs its own frame files** (`props.frames`), or a panel and
-  a pane overwrite each other's frame on show. Read props with `props()` from
-  `herdr`; `init`'s first argument is empty here.
+- **Each view needs its own frame files**, or two views overwrite each other's
+  frame on show. A mod pane can't learn its own pane id (its `props()` hold
+  only what it was opened with, and `panes()` lists terminal panes only), and a
+  fresh id per pane would leak decoded images, so panes reuse `pane-N` slots.
+  Saving a mod file reloads every copy without `close()`, so a reload takes
+  new slots and the old ones (and their device choices) stay taken until
+  Herdr restarts. Read props with `props()` from `herdr`; `init`'s first
+  argument is empty here.
 - **Herdr's `PATH` can find a broken `node`**: start serve-sim and the helper
   through `$SHELL -lic`. Mods have no `setTimeout`; wait in `sh` instead.
 - **`serve-sim --list -q` ignores its UDID**: match the running stream's
@@ -131,6 +144,10 @@ an e2e reporter shows it when a test run starts.
   arrive while Device Hub is frontmost; when
   `com.apple.coredevice.dtuhidd.active` is 1, taps do nothing until
   `serve-sim repair-input`.
+- **Copies keep running while hidden.** Once shown, a copy stays alive while
+  its block is in the layout, so the panel checks `layout()` (the `panel`
+  column's `hidden`, `panel-body`'s `active`) and stops reading frames. The
+  Android helper exits meanwhile, so reopening starts it again before reading.
 - **x86 Android images can't run** on Apple silicon; list them, don't boot them.
 - `herdr-app shot` runs on Herdr's main thread (~40 ms each): sampling faster
   than ~5 per second starves the view you're measuring.
@@ -147,5 +164,7 @@ an e2e reporter shows it when a test run starts.
   helper process exits a few seconds after the view leaves it.
 - `herdr-app do pane.split --direction right --mod herdr-sim` opens the same view
   in a layout without the panel, while the panel shows too, both live.
+- Two panes can show an iPhone and an Android emulator at once, each near 30
+  frames a second while both scroll, and picking in one leaves the other.
 - `e2e run` in a Herdr terminal opens the panel (or a pane in another layout)
   as the run starts, and focus stays on the terminal.

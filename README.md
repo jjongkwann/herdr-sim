@@ -11,6 +11,7 @@ Pick any simulator or emulator on your Mac and use it right in Herdr. Run your m
 - **See the device live.** The screen updates about 30 times a second.
 - **Use it in place.** Click to tap, drag to swipe, scroll with your mouse or trackpad, and type with your keyboard. The buttons above the screen press Home, Lock and the volume keys, rotate the device, and on iOS show or hide the on-screen keyboard.
 - **Switch devices.** The picker lists every iOS simulator and Android emulator on your Mac, with the running ones marked green. Pick one that's off and it starts. Android emulators run without a window of their own.
+- **Show two at once.** Each panel and pane has its own device, so an iPhone and an Android emulator can run side by side. A new pane starts on the device you picked last.
 - **Put it where you want it.** Open it from a Simulator button in the tab bar, next to Files and Changes, or as a pane in any layout.
 - **Watch your tests.** With [e2e](https://e2e.tester.army), the device opens by itself when a test run starts.
 - **Fix stuck taps.** On Xcode 27, taps on a simulator sometimes stop working. Repair input in the picker fixes them. It restarts SpringBoard, so open apps close.
