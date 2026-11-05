@@ -13,7 +13,6 @@ Pick any simulator or emulator on your Mac and use it right in Herdr. Run your m
 - **Switch devices.** The picker lists every iOS simulator and Android emulator on your Mac, with the running ones marked green. Pick one that's off and it starts. Android emulators run without a window of their own.
 - **Show two at once.** Each panel and pane has its own device, so an iPhone and an Android emulator can run side by side. A new pane starts on the device you picked last.
 - **Put it where you want it.** Open it from a Simulator button in the tab bar, next to Files and Changes, or as a pane in any layout.
-- **Watch your tests.** With [e2e](https://e2e.tester.army), the device opens by itself when a test run starts.
 - **Fix stuck taps.** On Xcode 27, taps on a simulator sometimes stop working. Repair input in the picker fixes them. It restarts SpringBoard, so open apps close.
 
 ## Install
@@ -52,21 +51,6 @@ herdr-app do pane.split --direction right --mod herdr-sim
 
 Close it like any other pane.
 
-### With e2e
-
-Copy [`e2e/herdr-sim.ts`](e2e/herdr-sim.ts) into your project and add it to your config's reporters:
-
-```ts
-import { herdrSim } from './e2e/herdr-sim';
-
-export default {
-  // ...
-  reporters: ['list', herdrSim()],
-};
-```
-
-When `e2e run` starts in a Herdr terminal, the device opens in the panel, or as a pane beside your tests in other layouts. Your keyboard stays in the terminal. It shows the device you picked last, so pick the one your tests run on.
-
 ## What it runs on your Mac
 
 Herdr Sim sends nothing over the internet itself.
@@ -80,7 +64,6 @@ Herdr Sim sends nothing over the internet itself.
 - It works on macOS only. It's tested with Herdr 0.1.13, Xcode 27 and Android emulator 37.2.
 - The picture is about 0.2 seconds behind the device, because Herdr takes that long to show a changed image. Taps and typing reach the device right away.
 - Showing an iPhone takes about 175 MB of memory.
-- The e2e reporter doesn't switch the picker to the device your tests run on.
 - The Simulator button lives in a copy of Herdr 0.1.13's tab bar. If a Herdr update changes the tab bar, this copy keeps the old one until it's updated here.
 
 ## License

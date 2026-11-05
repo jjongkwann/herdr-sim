@@ -394,7 +394,7 @@ export default class Simulator extends View {
       case "repairing": return `Repairing input on ${p.device.name}. SpringBoard restarts and apps close.`;
       case "booting": return `Booting ${p.device.name}…`;
       case "shutdown": return `${p.device.name} is shut down. Pick it again to boot it.`;
-      case "no-device": return "Pick a device above, or start an e2e run";
+      case "no-device": return "Pick a device above";
       case "error": return p.message;
     }
   }

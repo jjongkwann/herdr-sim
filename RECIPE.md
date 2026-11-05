@@ -3,8 +3,7 @@
 Herdr's main window with a live phone in it: a **Simulator** button after Files
 and Changes opens the picked iOS simulator or Android emulator in the
 right-hand panel, where the person taps, swipes and types on it while their
-code and tests run beside it. The same view opens as a pane in any layout, and
-an e2e reporter shows it when a test run starts.
+code and tests run beside it. The same view opens as a pane in any layout.
 
 ![Herdr Sim](preview.png)
 
@@ -32,7 +31,7 @@ an e2e reporter shows it when a test run starts.
 - **Instead of the screen**, a black rounded rectangle with one 12px `dim`
   line while there's no picture: `Connecting to iPhone 17…`, `Booting Pixel 3a
   API 36…`, `iPhone 17 is shut down. Pick it again to boot it.`, `Pick a device
-  above, or start an e2e run`, `Repairing input on iPhone 17. SpringBoard
+  above`, `Repairing input on iPhone 17. SpringBoard
   restarts and apps close.`, or an error's message.
 - **The device menu** drops from the selector over the view (8px radius,
   `popover` background, `border` border, medium shadow): an 11px `dim` heading
@@ -64,12 +63,6 @@ an e2e reporter shows it when a test run starts.
   The toolbar buttons press the device's buttons.
 - **Repair input** (iOS) runs `serve-sim repair-input`, then restarts the
   stream; for when taps do nothing because Xcode's Device Hub took input.
-- **e2e reporter** (`e2e/herdr-sim.ts`): on `run-started`, inside a Herdr
-  terminal (`HC_TERMINAL_ID` set), runs `layout.select` `panel-body` →
-  `herdr-sim` then `layout.show` `panel`; if the layout has no such stack, it
-  opens a `herdr-sim` pane to the right, remembers its id in
-  `$TMPDIR/herdr-sim-pane`, reuses it next run if `pane.focus` still finds
-  it, and gives focus back to the test's terminal.
 
 ## Built from
 
@@ -166,5 +159,3 @@ an e2e reporter shows it when a test run starts.
   in a layout without the panel, while the panel shows too, both live.
 - Two panes can show an iPhone and an Android emulator at once, each near 30
   frames a second while both scroll, and picking in one leaves the other.
-- `e2e run` in a Herdr terminal opens the panel (or a pane in another layout)
-  as the run starts, and focus stays on the terminal.
