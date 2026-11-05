@@ -1,0 +1,8 @@
+{
+  "global": {
+    "cmd-shift-s": { "command": "pane.split", "args": { "direction": "right", "mod": "simdock" } }
+  },
+  "layout:simdock": {
+    "cmd-shift-s": "tabs-simdock.simdock"
+  }
+}

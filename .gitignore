@@ -1,0 +1,9 @@
+# The demo app lives beside the repo, not in it.
+expo-app/
+# Frames the mod writes while it runs.
+mods/simdock-screen/*.jpg
+# Written by Herdr into every mod folder.
+jsconfig.json
+gpui-kit.d.ts
+node_modules/
+.DS_Store
