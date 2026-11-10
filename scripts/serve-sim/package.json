@@ -1,0 +1,8 @@
+{
+  "name": "herdr-sim-serve-sim",
+  "private": true,
+  "description": "Runtime dependencies of serve-sim 0.1.49 for herdr-sim. Installed by scripts/install-serve-sim.sh.",
+  "dependencies": {
+    "ws": "8.22.0"
+  }
+}

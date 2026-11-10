@@ -24,6 +24,7 @@ Or by hand:
 ```sh
 git clone https://github.com/wobsoriano/herdr-sim
 cd herdr-sim
+scripts/install-serve-sim.sh
 cp -R mods/herdr-sim mods/herdr-sim-screen mods/tabs-herdr-sim ~/.config/herdr-app/mods/
 cp layouts/herdr-sim.json ~/.config/herdr-app/layouts/
 herdr-app do layout.switch --name herdr-sim
@@ -33,7 +34,17 @@ Then add the two shortcuts in [keys.json](keys.json) to `~/.config/herdr-app/key
 
 If you only want the pane, copy `mods/herdr-sim` and `mods/herdr-sim-screen` and skip the rest.
 
-You need macOS, Xcode with at least one simulator, and Node. For Android you also need the Android SDK and an emulator image built for your Mac's chip.
+You need macOS, Xcode with at least one simulator, and Node 20 or later with npm. For Android you also need the Android SDK and an emulator image built for your Mac's chip.
+
+### serve-sim
+
+For iOS, Herdr Sim runs [serve-sim](https://github.com/EvanBacon/serve-sim) 0.1.49 from `~/.local/share/herdr-sim/serve-sim-0.1.49/`. `scripts/install-serve-sim.sh` puts it there once:
+
+- It downloads `serve-sim-0.1.49.tgz` from the npm registry, or takes a tarball you already have: `scripts/install-serve-sim.sh path/to/serve-sim-0.1.49.tgz`.
+- It stops unless the tarball's sha512 matches the hash written in the script, which is npm's `dist.integrity` for serve-sim 0.1.49.
+- It unpacks the tarball into `package/` and installs serve-sim's one runtime dependency, `ws`, with `npm ci --ignore-scripts` from the lockfile in `scripts/serve-sim/`, which pins `ws` by its hash too. No package scripts run.
+
+The mod then runs `node ~/.local/share/herdr-sim/serve-sim-0.1.49/package/dist/serve-sim.js` directly. It looks for `node` in `/opt/homebrew/bin`, then `/usr/local/bin`, then on Herdr's `PATH`. It never uses `npx` and never downloads anything at run time; if the folder is missing, the panel tells you to run the script. Running the script again replaces the folder.
 
 ## Use it
 
@@ -55,7 +66,7 @@ Close it like any other pane.
 
 Herdr Sim sends nothing over the internet itself.
 
-- For iOS it runs Xcode's simulator tools and [serve-sim](https://github.com/EvanBacon/serve-sim), which downloads from npm the first time.
+- For iOS it runs Xcode's simulator tools and the copy of serve-sim that `scripts/install-serve-sim.sh` installed. Only that script downloads anything.
 - For Android it runs `adb` and the emulator from your Android SDK, plus a small helper that comes with the mod.
 - It saves the latest frames of the screen as image files in its own folder, because Herdr shows pictures from files.
 

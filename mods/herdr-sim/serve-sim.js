@@ -1,12 +1,18 @@
 import { exec } from "herdr";
 import { WebSocket } from "websocket";
 
-// Run through an interactive login shell so npx resolves the same node the
-// person's terminals do; the login-only PATH can point at a different one.
+// serve-sim 0.1.49 from the folder scripts/install-serve-sim.sh fills after
+// checking the tarball's hash, run with node directly: no npx, no login shell.
+// Herdr's PATH can find a broken node, so the usual install places go first.
 // On Xcode 27 serve-sim types through a Device Hub bridge that drops keys
 // unless Device Hub is the frontmost app; without it, keys take the same
 // path as touches.
-const SERVE_SIM = "SERVE_SIM_DISABLE_DEVICE_HUB_KEYBOARD=1 exec \"${SHELL:-/bin/zsh}\" -lic 'npx --yes serve-sim@0.1.49 \"$@\"' serve-sim \"$@\"";
+const SERVE_SIM = `
+entry="$HOME/.local/share/herdr-sim/serve-sim-0.1.49/package/dist/serve-sim.js"
+[ -f "$entry" ] || { echo "serve-sim 0.1.49 isn't installed: run scripts/install-serve-sim.sh from the herdr-sim repository" >&2; exit 1; }
+for node in /opt/homebrew/bin/node /usr/local/bin/node "$(command -v node)"; do [ -x "$node" ] && break; node=; done
+[ -n "$node" ] || { echo "serve-sim needs Node: install it in /opt/homebrew/bin, /usr/local/bin or on Herdr's PATH" >&2; exit 1; }
+SERVE_SIM_DISABLE_DEVICE_HUB_KEYBOARD=1 exec "$node" "$entry" "$@"`;
 
 // The helper's /ws input protocol: one tag byte, then a JSON body.
 const TAG = { touch: 0x03, button: 0x04, key: 0x06, rotate: 0x07, scroll: 0x0b, keyboard: 0x0c };

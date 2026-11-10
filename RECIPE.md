@@ -81,7 +81,8 @@ code and tests run beside it. The same view opens as a pane in any layout.
     frames on localhost plus an input object with `touch`, `key`, `button`,
     `hid`, `scroll`, `rotate` (and `softwareKeyboard` on iOS). One `stream()`
     reader handles both platforms.
-  - **iOS**: `serve-sim@0.1.49` through `$SHELL -lic 'npx --yes …'` with
+  - **iOS**: `node ~/.local/share/herdr-sim/serve-sim-0.1.49/package/dist/serve-sim.js`
+    (installed and hash-checked by `scripts/install-serve-sim.sh`; no `npx`, no login shell) with
     `SERVE_SIM_DISABLE_DEVICE_HUB_KEYBOARD=1`; frames from
     `/helper/<udid>/stream.mjpeg` over `net.connect`; input over its `/ws`
     socket as `[tag][JSON]` (0x03 touch, 0x04 button, 0x06 key, 0x0b scroll,
@@ -129,8 +130,9 @@ code and tests run beside it. The same view opens as a pane in any layout.
   new slots and the old ones (and their device choices) stay taken until
   Herdr restarts. Read props with `props()` from `herdr`; `init`'s first
   argument is empty here.
-- **Herdr's `PATH` can find a broken `node`**: start serve-sim and the helper
-  through `$SHELL -lic`. Mods have no `setTimeout`; wait in `sh` instead.
+- **Herdr's `PATH` can find a broken `node`**: serve-sim runs the first of
+  `/opt/homebrew/bin/node`, `/usr/local/bin/node`, then `node` on `PATH`; the
+  Android helper still starts through `$SHELL -lic`. Mods have no `setTimeout`; wait in `sh` instead.
 - **`serve-sim --list -q` ignores its UDID**: match the running stream's
   `device` yourself.
 - **Xcode 27**: without `SERVE_SIM_DISABLE_DEVICE_HUB_KEYBOARD=1` keys only
