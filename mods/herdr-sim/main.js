@@ -4,7 +4,7 @@ import { exec, theme, appHome, shared, setShared, nextCommand, props, layout } f
 import net from "net";
 import { writeFile } from "fs/promises";
 import { serveSim, startHelper, keyUsages, touchEdge } from "./serve-sim.js";
-import { SDK, startAndroid } from "./android.js";
+import { SDK, startAndroid, serialOf } from "./android.js";
 
 // Frames (serve-sim's MJPEG on iOS, android-stream.mjs's PNGs on Android) go to another mod's folder. Herdr refreshes
 // images under mods/ when they change, but a write inside this mod's own
@@ -127,9 +127,14 @@ async function listEmulators() {
 const PLATFORMS = [
   { id: "android", label: "Android", icon: "android", list: listEmulators,
     boot: (d) => exec("sh", ["-c", `${SDK}; nohup "$sdk/emulator/emulator" -avd "$1" -no-window -no-audio >/dev/null 2>&1 &`, "sh", d.avd]),
+    shutdown: async (d) => {
+      const serial = await serialOf(d.avd);
+      if (serial) await exec("sh", ["-c", `${SDK}; exec "$sdk/platform-tools/adb" -s "$1" emu kill`, "sh", serial]);
+    },
     start: startAndroid },
   { id: "ios", label: "iOS", icon: "apple", list: listSimulators,
     boot: (d) => exec("xcrun", ["simctl", "boot", d.id]),
+    shutdown: (d) => exec("xcrun", ["simctl", "shutdown", d.id]),
     start: startHelper },
 ];
 const platformOf = (d) => PLATFORMS.find((p) => p.id === d.platform);
@@ -173,6 +178,8 @@ export default class Simulator extends View {
     this.devices = [];
     this.picking = false;
     this.booting = new Set();
+    // Devices being shut down from the toolbar: the loop doesn't reconnect to them meanwhile.
+    this.stopping = new Set();
     this.repairing = null;
     this.view = props()?.frames ?? claimPaneSlot();
     this.frames = frameFiles(this.view);
@@ -236,6 +243,23 @@ export default class Simulator extends View {
     }
   }
 
+  // The toolbar's power button: ends the stream and its helper, then shuts the device down.
+  shutDown(device, cx) {
+    if (this.stopping.has(device.id)) return;
+    this.stopping.add(device.id);
+    this.socket?.close();
+    cx.notify();
+    cx.spawn(async (cx) => {
+      try {
+        await this.release(true);
+        await platformOf(device).shutdown(device);
+      } catch (e) {
+        this.stopping.delete(device.id);
+        this.set({ kind: "error", device, message: String(e.message ?? e) }, cx);
+      }
+    });
+  }
+
   repairInput(device) {
     this.picking = false;
     this.repairing = device.id;
@@ -269,6 +293,12 @@ export default class Simulator extends View {
           await sleep(cx, 2000);
           continue;
         }
+        if (device.booted && this.stopping.has(device.id)) {
+          this.set({ kind: "stopping", device }, cx);
+          await sleep(cx, 500);
+          continue;
+        }
+        this.stopping.delete(device.id);
         if (!device.booted) {
           this.set({ kind: this.booting.has(device.id) ? "booting" : "shutdown", device }, cx);
           await sleep(cx, 1000);
@@ -393,6 +423,7 @@ export default class Simulator extends View {
       case "starting": return p.device ? `Connecting to ${p.device.name}…` : "Starting…";
       case "repairing": return `Repairing input on ${p.device.name}. SpringBoard restarts and apps close.`;
       case "booting": return `Booting ${p.device.name}…`;
+      case "stopping": return `Shutting down ${p.device.name}…`;
       case "shutdown": return `${p.device.name} is shut down. Pick it again to boot it.`;
       case "no-device": return "Pick a device above";
       case "error": return p.message;
@@ -459,7 +490,9 @@ export default class Simulator extends View {
       .children(BUTTONS.filter((b) => !b.only || b.only === this.phase.device?.platform).map((b) => this.tool(t, b.id, b.icon, b.tip, live, (cx) => {
         const input = this.session?.input;
         if (input) cx.spawn(() => b.press(input));
-      })));
+      })))
+      .child(div().w(1).h(14).mx(4).bg(t.border))
+      .child(this.tool(t, "power", "power", "Shut down", live, (cx) => this.shutDown(this.phase.device, cx)));
   }
 
   tool(t, id, icon, tip, enabled, action) {
